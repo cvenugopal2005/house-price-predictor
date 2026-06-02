@@ -115,6 +115,12 @@ jobs:
             --models-dir models \
             --mlflow-tracking-uri http://localhost:5555
 
+      - name: Upload Trained Model
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-model
+          path: models/
+
       - name: Cleaning up MLflow Server
         run: |
           docker stop mlflow-server || true
