@@ -20,10 +20,10 @@ on:
         required: false
         default: 'false'
 
-    release:
-      types: [created]
-      branches: [ main ]
-      tags: [ 'v*.*.*' ]
+  release:
+    types: [created]
+    branches: [ main ]
+    tags: [ 'v*.*.*' ]
 
 jobs:
   data-processing:
@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -74,7 +74,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -98,11 +98,12 @@ jobs:
           docker run -d -p 5555:5000 --name mlflow-server ghcr.io/mlflow/mlflow:latest \
             mlflow server --host 0.0.0.0 \
             --backend-store-uri sqlite:///mlflow.db
+            --default-artifact-root /tmp/mlruns
       
       - name: Wait for MLflow Server
         run: |
           for i in {1..10}; do
-            if curl -s http://localhost:5555/health || sleep 5;
+            curl -f http://localhost:5555/health || sleep 5;
           done
 
       - name: Train the Model
@@ -144,11 +145,11 @@ jobs:
 
       - name: Build and test Docker image
         run: |
-          COMMIT_HASH=${{ github.sha }} | cut -c1-7
+          COMMIT_HASH=$(echo "${{ github.sha }}" | cut -c1-7)
           docker build -t docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:$COMMIT_HASH -f Dockerfile .
-          docker run -d -p 8000.8000 --name test-api docker.io/${{vars.DOCKERHUB_USERNAME}}/house-price-model:$COMMIT_HASH
+          docker run -d -p 8000:8000 --name test-api docker.io/${{vars.DOCKERHUB_USERNAME}}/house-price-model:$COMMIT_HASH
           for i in {1..10}; do
-            if curl -s http://localhost:8000/health || sleep 5;
+            curl -f http://localhost:8000/health && break || sleep 5;
           done
           docker logs test-api
 
