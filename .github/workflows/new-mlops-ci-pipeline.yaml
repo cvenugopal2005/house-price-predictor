@@ -173,7 +173,7 @@ jobs:
         
       - name: Push Docker image to Docker Hub
         run: |
-          COMMIT_HASH=${{ github.sha }} | cut -c1-7
+          COMMIT_HASH=$(echo "${{ github.sha }}" | cut -c1-7)
           docker tag docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:$COMMIT_HASH docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:latest
           docker push docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:$COMMIT_HASH
           docker push docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:latest
