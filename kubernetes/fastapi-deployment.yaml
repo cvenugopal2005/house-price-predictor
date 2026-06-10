@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: house-price-fastapi
+  name: house-price-fastapi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: house-price-fastapi
+  template:
+    metadata:
+      labels:
+        app: house-price-fastapi
+    spec:
+      containers:
+      - image: cvenugopal2005/house-price-fastapi:latest
+        name: house-price-fastapi
+

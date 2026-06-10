@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: house-price-fastapi
+  name: house-price-fastapi
+spec:
+  ports:
+  - name: "8000"
+    nodePort: 30100
+    port: 8000
+    protocol: TCP
+    targetPort: 8000
+  selector:
+    app: house-price-fastapi
+  type: NodePort
+
