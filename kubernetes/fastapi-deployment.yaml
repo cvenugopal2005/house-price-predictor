@@ -17,4 +17,12 @@ spec:
       containers:
       - image: cvenugopal2005/house-price-fastapi:latest
         name: house-price-fastapi
-
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
