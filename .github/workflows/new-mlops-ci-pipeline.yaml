@@ -174,9 +174,7 @@ jobs:
       - name: Push Docker image to Docker Hub
         run: |
           COMMIT_HASH=$(echo "${{ github.sha }}" | cut -c1-7)
-          docker tag docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-fastapi:$COMMIT_HASH docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-fastapi:latest
           docker push docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-fastapi:$COMMIT_HASH
-          docker push docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-fastapi:latest
 
       - name: Build Streamlit Docker image
         run: |
@@ -184,7 +182,6 @@ jobs:
 
           docker build \
             -t docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-streamlit:$COMMIT_HASH \
-            -t docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-streamlit:latest \
             -f streamlit_app/Dockerfile \
             streamlit_app
 
@@ -220,4 +217,44 @@ jobs:
           COMMIT_HASH=$(echo "${{ github.sha }}" | cut -c1-7)
 
           docker push docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-streamlit:$COMMIT_HASH
-          docker push docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-streamlit:latest
+
+  update-deployment-repo:
+      needs: build-and-publish
+      runs-on: ubuntu-latest
+
+      steps:
+      - name: Checkout Deployment Repo
+        uses: actions/checkout@v4
+        with:
+          repository: cvenugopal2005/house-price-deployment
+          token: ${{ secrets.DEPLOY_REPO_TOKEN }}
+          path: deployment-repo
+          fetch-depth: 0
+
+      - name: Update Image Tags
+        run: |
+          COMMIT_HASH=$(echo "${{ github.sha }}" | cut -c1-7)
+
+          sed -i "s|image: cvenugopal2005/house-price-fastapi:.*|image: cvenugopal2005/house-price-fastapi:${COMMIT_HASH}|g" deployment-repo/kubernetes/fastapi-deployment.yaml
+
+          sed -i "s|image: cvenugopal2005/house-price-streamlit:.*|image: cvenugopal2005/house-price-streamlit:${COMMIT_HASH}|g" deployment-repo/kubernetes/streamlit-deployment.yaml
+
+      - name: Show Updated Files
+        run: |
+          cat deployment-repo/kubernetes/fastapi-deployment.yaml
+          cat deployment-repo/kubernetes/streamlit-deployment.yaml
+
+      - name: Commit and Push Changes
+        run: |
+          cd deployment-repo
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add .
+
+          git diff --staged --quiet && echo "No changes detected" && exit 0
+
+          git commit -m "Update image tags to $(echo ${{ github.sha }} | cut -c1-7)"
+
+          git push
